@@ -6,7 +6,7 @@
 	Contains all the information recorded by this network.
 
 # Class Variables
-- instance: InformationNetwork
+- currentNetwork: InformationNetwork
 	The information network that Informant will inform
 "
 Class {
@@ -17,26 +17,31 @@ Class {
 		'informationCollected'
 	],
 	#classVars : [
-		'instance'
+		'currentNetwork'
 	],
 	#category : #InformantNetwork
 }
 
 { #category : #accessing }
-InformantNetwork class >> instance [
-	instance ifNil: [ instance := self new ].
-	^ instance
+InformantNetwork class >> currentNetwork [
+	currentNetwork ifNil: [ currentNetwork := self new ].
+	^ currentNetwork
 ]
 
 { #category : #'as yet unclassified' }
 InformantNetwork class >> newNetwork [
 	<script>
-	instance := nil
+	currentNetwork := nil
 ]
 
 { #category : #'as yet unclassified' }
 InformantNetwork class >> receiveInformationFrom: aString [
-	self instance receiveInformationFrom: aString
+	self currentNetwork receiveInformationFrom: aString
+]
+
+{ #category : #'as yet unclassified' }
+InformantNetwork >> blockToSourceCode: aBlock [
+	^ aBlock sourceNode body sourceCode
 ]
 
 { #category : #accessing }
@@ -55,8 +60,7 @@ InformantNetwork >> eraseInformationCollected [
 InformantNetwork >> evaluateBlock: aBlock inContext: aContext [
 	| receiver source |
 	receiver := aContext receiver.
-	source := aBlock sourceNode body.
-	source inspect. "source should be a string or stream"
+	source := self blockToSourceCode: aBlock.
 	^ receiver class compiler source: source;
 		context: aContext;
 		receiver: receiver;
@@ -65,14 +69,14 @@ InformantNetwork >> evaluateBlock: aBlock inContext: aContext [
 
 { #category : #'as yet unclassified' }
 InformantNetwork >> findCollectionContext [
-	"Walks back the context stack until it finds a context whose method has the #frontierWithExecution pragma, then return that context"
+	"Walks back the context stack until it finds a context whose method has the #frontierWithExecution pragma, then return the sender of that context"
 	| result |
 	result := thisContext.
 	[result method pragmaAt: #frontierWithExecution] whileNil: [ 
 		result := result sender.
 		result ifNil: [ self error: 'Walked back the full context stack without finding a method with the #frontierWithExecution pragma' ].
 	].
-	^ result
+	^ result sender
 	
 ]
 
@@ -97,12 +101,12 @@ InformantNetwork >> receiveInformationFrom: informantName [
 		collectionContext := self findCollectionContext. "Context in which to evaluate informationBlock to collect the information"
 		collectedInformation := nil.
 		successfulCollect := true.
-		[collectedInformation := self evaluateBlock: informationBlock inContext: collectionContext] on: Exception do: [
-			self inform: 'Collection of information named ', informationName, ' by informant named ', informantName, ' failed'.
+		[collectedInformation := self evaluateBlock: informationBlock inContext: collectionContext] on: Error do: [:ex |
+			self inform: 'Collection of information named: ', informationName, ' by informant named: ', informantName, ' by evaluating code: ', (self blockToSourceCode: informationBlock ), ' failed because: ', ex asString.
 			successfulCollect := false.
 			 ].
 		informationRecord := InformationRecord newWithInformantName: informantName informationName: informationName information: collectedInformation informationCollectedSuccessfully: successfulCollect. 
-		
+		self informationCollected add: informationRecord.
 	]
 ]
 

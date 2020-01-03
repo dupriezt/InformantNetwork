@@ -43,6 +43,12 @@ InformationRecord class >> newWithInformantName: informantName informationName: 
 	^ r
 ]
 
+{ #category : #initialization }
+InformationRecord class >> resetIndex [
+	<script>
+	currentIndex := 0.
+]
+
 { #category : #accessing }
 InformationRecord >> index [
 	^ index
