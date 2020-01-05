@@ -11,9 +11,9 @@ Class {
 { #category : #'instance creation' }
 DictionaryLookupMockup >> lookup: aKey [
 	self testValue: 1.
-	Informant inform: 'Start Lookup'.
+	Informant report: 'Start Lookup'.
 	"Simulate the lookup"
-	self succeedLookup ifFalse: [ self testValue: 2. Informant inform: 'Lookup Failed' "Simulate putting the key into the cache" ]
+	self succeedLookup ifFalse: [ self testValue: 2. Informant report: 'Lookup Failed' "Simulate putting the key into the cache" ]
 ]
 
 { #category : #'instance creation' }

@@ -88,7 +88,7 @@ InformantNetwork >> informationCollectSchema [
 
 { #category : #accessing }
 InformantNetwork >> informationCollected [
-	informationCollected ifNil: [ informationCollected := OrderedCollection new ].
+	informationCollected ifNil: [ informationCollected := InformationCollectionRecord new ].
 	^ informationCollected
 ]
 
