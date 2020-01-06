@@ -4,7 +4,8 @@ Class {
 	#instVars : [
 		'informationTable',
 		'refreshInformationTableButton',
-		'listOfFiltersByInformationName'
+		'listOfFiltersByInformationName',
+		'informationProcessingTextField'
 	],
 	#category : #InformantNetwork
 }
@@ -19,6 +20,8 @@ InformantNetworkPresenter class >> defaultSpec [
 			add: #refreshInformationTableButton  withConstraints: [:cstr | cstr height: 30];
 			yourself) withConstraints: [:cstr | cstr width: 500];
 		add: (SpBoxLayout newVertical
+			add: 'Processing block (argument is `info` (InformationCollectionRecord))' withConstraints: [:cstr | cstr height: 20];
+			add: #informationProcessingTextField;
 			add: 'Filters / Sorters' withConstraints: [:cstr | cstr height: 20];
 			add: #listOfFiltersByInformationName;
 			yourself
@@ -28,7 +31,7 @@ InformantNetworkPresenter class >> defaultSpec [
 
 { #category : #'instance creation' }
 InformantNetworkPresenter class >> initialExtent [
-	^ 700@300
+	^ 1100@300
 ]
 
 { #category : #'instance creation' }
@@ -43,6 +46,16 @@ InformantNetworkPresenter class >> open [
 { #category : #specs }
 InformantNetworkPresenter class >> title [
 	^ 'Informant Network'
+]
+
+{ #category : #specs }
+InformantNetworkPresenter class >> worldMenu: aBuilder [
+	<worldMenu>
+	aBuilder item: 'Informant Network';
+		parent: #Debugging;
+		order: 5;
+		action: [self open];
+		iconName: #smallDoIt
 ]
 
 { #category : #initialization }
@@ -69,11 +82,29 @@ InformantNetworkPresenter >> initializeWidgets [
 		label: 'Refresh';
 		yourself.
 	 listOfFiltersByInformationName := self newTable.
+	informationProcessingTextField := self newTextInput
+		acceptBlock: [:processingText | self refreshInformationTableWithProcessingText: processingText];
+		placeholder: 'info';
+		yourself.
 	
 	self refreshInformationTable
 ]
 
 { #category : #initialization }
 InformantNetworkPresenter >> refreshInformationTable [
-	informationTable items: InformantNetwork currentNetwork informationCollected.
+	| textOfProcessingField |
+	textOfProcessingField := informationProcessingTextField text.
+	textOfProcessingField = '' ifTrue: [textOfProcessingField := 'info' ].
+	self refreshInformationTableWithProcessingText: textOfProcessingField.
+]
+
+{ #category : #initialization }
+InformantNetworkPresenter >> refreshInformationTableWithProcessingText: aString [
+	| textOfProcessingField subC |
+	textOfProcessingField := aString.
+	textOfProcessingField = '' ifTrue: [textOfProcessingField := 'info' ].
+	subC := InformationCollectionRecordProcessing newAnonymousSubclass.
+	subC compile: 'process: infoCollection
+		^ [:info | ', textOfProcessingField, ' ] value: infoCollection'.
+	informationTable items: (subC new perform: #process: with: (InformantNetwork currentNetwork informationCollected)).
 ]
