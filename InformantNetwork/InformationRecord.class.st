@@ -98,3 +98,10 @@ InformationRecord >> informationName [
 InformationRecord >> informationName: anObject [
 	informationName := anObject
 ]
+
+{ #category : #printing }
+InformationRecord >> printOn: aStream [
+	aStream
+		nextPutAll: 'InfoRec index (', self index asString, '): ';
+		nextPutAll: '(', self informantName, ') reported (', self information asString, ') as (', self informationName, ') collection was (', self informationCollectedSuccessfully asString, ')'. 
+]
